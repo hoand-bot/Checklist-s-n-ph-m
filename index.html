@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Checklist các khoá – GV crosscheck</title>
+<style>
+  :root{
+    --bg:#f6f7fb; --card:#fff; --ink:#1f2330; --muted:#6b7280;
+    --line:#e5e7eb; --accent:#2563eb; --accent-soft:#dbeafe;
+    --pass:#16a34a; --pass-soft:#dcfce7;
+    --fail:#dc2626; --fail-soft:#fee2e2;
+    --warn:#d97706; --warn-soft:#fef3c7;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.05);
+    color-scheme:light;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif,"Apple Color Emoji";
+    font-size:14px;line-height:1.45}
+  a{color:var(--accent)}
+  .wrap{max-width:1200px;margin:0 auto;padding:18px}
+  header.topbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;
+    background:var(--card);padding:12px 16px;border-radius:12px;box-shadow:var(--shadow);margin-bottom:14px}
+  header.topbar h1{font-size:16px;margin:0 8px 0 0}
+  .grow{flex:1}
+  .pill{display:inline-flex;gap:6px;align-items:center;background:#f3f4f6;
+    padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted)}
+  .pill.ok{background:var(--pass-soft);color:var(--pass)}
+  .pill.warn{background:var(--warn-soft);color:var(--warn)}
+  .pill.bad{background:var(--fail-soft);color:var(--fail)}
+  .input,.btn,select{
+    border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:#fff;
+    font:inherit;color:inherit;outline:none}
+  .input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .btn{cursor:pointer;background:#fff}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .btn.primary:hover{filter:brightness(1.05)}
+  .btn.ghost{background:transparent}
+  .btn:hover{background:#f9fafb}
+  .tabs{display:flex;gap:6px;background:var(--card);padding:8px;border-radius:12px;box-shadow:var(--shadow);margin-bottom:14px;overflow:auto}
+  .tab{padding:8px 14px;border-radius:8px;cursor:pointer;color:var(--muted);font-weight:600;white-space:nowrap}
+  .tab.active{background:var(--accent);color:#fff}
+  .layout{display:grid;grid-template-columns:240px 1fr;gap:14px}
+  @media (max-width:880px){.layout{grid-template-columns:1fr}}
+  .lessons-card,.content-card,.intro-card{background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:14px}
+  .lessons-card h3,.content-card h3,.intro-card h3{margin:0 0 10px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .lesson-list{display:flex;flex-direction:column;gap:4px;max-height:560px;overflow:auto}
+  .lesson-btn{display:flex;justify-content:space-between;align-items:center;
+    padding:8px 10px;border-radius:8px;cursor:pointer;border:1px solid transparent}
+  .lesson-btn:hover{background:#f3f4f6}
+  .lesson-btn.active{background:var(--accent-soft);border-color:#bfdbfe;color:#1e3a8a;font-weight:600}
+  .badge{font-size:11px;padding:2px 6px;border-radius:6px;background:#f3f4f6;color:var(--muted)}
+  .badge.ok{background:var(--pass-soft);color:var(--pass)}
+  .badge.partial{background:var(--warn-soft);color:var(--warn)}
+  .group-title{margin:14px 0 6px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .group-title:first-child{margin-top:0}
+  table.checklist{width:100%;border-collapse:collapse}
+  table.checklist th,table.checklist td{border-bottom:1px solid var(--line);padding:10px 8px;vertical-align:top;text-align:left}
+  table.checklist th{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em;background:#fafbfc}
+  table.checklist td.crit{width:46%;white-space:pre-wrap}
+  table.checklist td.status{width:170px}
+  table.checklist td.note{width:34%}
+  table.checklist td.audit{width:130px;font-size:11px;color:var(--muted);white-space:nowrap}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{background:#fff;border:0;padding:6px 10px;cursor:pointer;font:inherit;color:var(--muted)}
+  .seg button + button{border-left:1px solid var(--line)}
+  .seg button.pass.on{background:var(--pass);color:#fff}
+  .seg button.fail.on{background:var(--fail);color:#fff}
+  .seg button.na.on{background:#374151;color:#fff}
+  textarea.note{width:100%;min-height:38px;resize:vertical;border:1px solid var(--line);
+    border-radius:8px;padding:7px 9px;font:inherit;color:inherit;background:#fff}
+  textarea.note:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .intro-card details summary{cursor:pointer;font-weight:600}
+  .intro-card .changes{white-space:pre-wrap;color:#374151;margin-top:8px}
+  .footer{color:var(--muted);font-size:12px;text-align:center;margin:18px 0}
+  .modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.5);display:flex;
+    align-items:center;justify-content:center;padding:18px;z-index:50}
+  .modal{background:#fff;border-radius:14px;max-width:520px;width:100%;padding:22px;box-shadow:0 20px 40px rgba(15,23,42,.25)}
+  .modal h2{margin:0 0 6px}
+  .row{display:flex;gap:10px;align-items:center}
+  .row + .row{margin-top:10px}
+  .hint{color:var(--muted);font-size:12px}
+  .progress{height:6px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin-top:6px}
+  .progress > i{display:block;height:100%;background:var(--pass);transition:width .25s}
+  .summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-top:8px}
+  .sum-card{background:#f9fafb;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+  .sum-card b{font-size:13px}
+  .sum-card .progress{margin-top:4px}
+  .toast{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;
+    padding:8px 14px;border-radius:8px;font-size:12px;opacity:0;transition:opacity .2s;z-index:60}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <h1>Checklist các khoá – Crosscheck GV</h1>
+    <span id="syncPill" class="pill">Đang khởi động…</span>
+    <span id="roomPill" class="pill" title="Mã phòng"></span>
+    <span class="grow"></span>
+    <span class="pill">GV: <b id="gvLabel">—</b></span>
+    <button class="btn" id="btnChangeName">Đổi tên</button>
+    <button class="btn" id="btnShare">Sao chép link</button>
+    <button class="btn ghost" id="btnExport" title="Tải JSON sao lưu">Export</button>
+  </header>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="intro-card" id="introCard">
+    <details>
+      <summary>Những thay đổi chính của khoá <span id="introCourse"></span></summary>
+      <div class="changes" id="introChanges"></div>
+    </details>
+    <h3 style="margin-top:14px">Tiến độ tổng quan</h3>
+    <div class="summary-grid" id="summaryGrid"></div>
+  </div>
+
+  <div class="layout" style="margin-top:14px">
+    <div class="lessons-card">
+      <h3>Bài học</h3>
+      <div class="lesson-list" id="lessonList"></div>
+    </div>
+    <div class="content-card">
+      <h3>Checklist – <span id="ctxCourse"></span> · <span id="ctxLesson"></span></h3>
+      <div id="checklistArea"></div>
+    </div>
+  </div>
+
+  <p class="footer">Mọi thay đổi tự động lưu lên cloud (JSONBlob). Các GV mở cùng link sẽ thấy cập nhật trong vài giây.</p>
+</div>
+
+<div id="nameModal" class="modal-backdrop" style="display:none">
+  <div class="modal">
+    <h2>Bạn là GV nào?</h2>
+    <p class="hint">Tên này sẽ hiển thị ở mỗi ô bạn check, để cả nhóm biết ai vừa cập nhật. Có thể đổi sau bất cứ lúc nào.</p>
+    <div class="row">
+      <input class="input grow" id="nameInput" placeholder="VD: Cô Hoa" />
+      <button class="btn primary" id="nameSave">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<div id="roomModal" class="modal-backdrop" style="display:none">
+  <div class="modal">
+    <h2>Phòng làm việc chung</h2>
+    <p class="hint">Để các GV cùng thấy chung dữ liệu, cần một <b>mã phòng</b>. Bạn có thể tạo phòng mới (lần đầu), hoặc dán mã phòng đã có (nếu được người khác chia sẻ).</p>
+    <div class="row">
+      <button class="btn primary" id="btnCreateRoom">Tạo phòng mới</button>
+      <span class="hint">— hoặc —</span>
+    </div>
+    <div class="row">
+      <input class="input grow" id="roomInput" placeholder="Dán mã phòng (vd: 123456789012345678)" />
+      <button class="btn" id="btnJoinRoom">Vào phòng</button>
+    </div>
+    <p class="hint" id="roomError" style="color:var(--fail);margin-top:10px"></p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===================== Data: courses, criteria ===================== */
+const COURSES = [
+  {
+    code:"PRE",
+    name:"PRE-IELTS",
+    lessons:20,
+    changes:`Slides:
+- Học viên đã học ngữ pháp ở nhà → trên lớp nhắc lại, luyện tập, ưu tiên thực hành nói.
+- Đơn giản hoá các khái niệm khó nhớ (VD: coordinating conjunctions).
+
+DC:
+- Bổ sung thêm yêu cầu quay video.
+- Nội dung DC mang tính ứng dụng cho speaking cao.`,
+    groups:[
+      {name:"Slides", items:[
+        "Đầy đủ nội dung và theo đúng lộ trình tổng quan mới (đã có trong folder)",
+        "Có logo + QR code",
+        "Có chính phụ trong trình bày nội dung (cỡ chữ, tương phản,..)",
+        "Có căn chỉnh",
+        "Màu sắc hài hoà",
+        "Note số trang sách cho HV mở nếu có",
+        "Không có bất kỳ lỗi nào về spelling, dấu câu, ngữ pháp,... (tương tự với DC và lesson plan)",
+        "Phần grammar đã cắt hết lý thuyết, chỉ có review nhanh sau khi HV đã xem video ở nhà; có hoạt động ứng dụng được ngay phần ngữ pháp đó",
+        "Có phần hướng dẫn Speaking chi tiết và thực hành mỗi buổi trên lớp (ngoại trừ 5 buổi Pronunciation)"
+      ]},
+      {name:"DC (Daily Challenge)", items:[
+        "Đặt tên đúng cú pháp [Mã lớp] - Lesson - Challenge (VD: [PRE-IELTS] - Lesson 1 - Challenge 1). Viết hoa/thường y mẫu, để 'Không hiển thị', đúng loại bài.",
+        "Đưa hết văn bản về font Arial / đồng bộ",
+        "Có yêu cầu Xem video grammar trước buổi học, kèm bài tập ngắn để check HV có xem",
+        "Bài nghe nếu có nhiều câu thì tách thành các file nghe nhỏ tương ứng + có transcript trong phần giải thích đáp án",
+        "Nội dung câu hỏi mang tính ứng dụng, có thể dùng trong bài nói của HV",
+        "Bài tập không quá khó so với khả năng HV và kiến thức được cung cấp ở video/INPUT/hướng dẫn của GV",
+        "Hướng dẫn ở đề bài đủ rõ ràng và dễ hiểu để HV làm bài không gặp khó khăn",
+        "Khối lượng DC phù hợp để HV làm trong vòng 2 tiếng mỗi ngày"
+      ]},
+      {name:"Lesson plan", items:[
+        "Có review lesson trước + review kiến thức mới (đã học ở nhà)",
+        "Có thời gian, hướng dẫn chi tiết cho từng hoạt động theo đúng flow trong slides",
+        "Thời gian giữa các hoạt động hợp lý, cân đối; GV mới đọc thấy đủ rõ ràng dễ follow; mọi hoạt động có mục đích cụ thể, các phần liên kết rõ ràng"
+      ]},
+      {name:"Tài liệu khác (Recap/Tổng kết khoá…)", items:[
+        "Đã điều chỉnh theo lộ trình mới"
+      ]}
+    ]
+  },
+  {
+    code:"IFA",
+    name:"IELTS Foundation A",
+    lessons:20,
+    changes:`1. Lộ trình:
+- Bỏ: Câu điều kiện loại 0, Quá khứ hoàn thành, MĐQH rút gọn.
+- Gộp L10+11 (cũ) → Lesson 10 (mới); L12-19 (cũ) → L11-18 (mới).
+- Buổi 19 → Mock Test 3 kỹ năng. Đổi thứ tự dạy: Vocab – Grammar – Speaking.
+
+2. Slides:
+- Review xen kẽ B1-9 (VD: B2 Shadowing, B3 Speaking). Common-mistakes mỗi 5 buổi.
+- Vocab: đổi dạng input (Listening, Gap-fill, Matching Definition…) – 2 buổi liên tiếp không trùng. Có bảng tổng hợp 10–15 từ.
+- Grammar: bỏ controlled practice; bài tập gắn chủ đề Vocab + đổi sang dạng productive (Speaking/Writing).
+- Speaking: extend idea (8 cách) → W-H (Lesson 14).
+- Writing: bỏ conclusion khi viết body.
+
+3. DC:
+- Vocab: bỏ từ C1/C2 và từ ít ứng dụng; đổi note thành bảng cho sẵn cả câu context, HV chỉ viết từ loại + nghĩa.
+- Listening: thêm gap-fill (10 lessons đầu) – ONE/TWO WORDS, từ dễ, được nhấn mạnh trong audio. Bỏ transcript ở đề bài. Đổi bài Listening khó → dễ hơn.`,
+    groups:[
+      {name:"Slides", items:[
+        "Đầy đủ nội dung và theo đúng lộ trình tổng quan mới (đã có trong folder)",
+        "Có logo + QR code",
+        "Có chính phụ trong trình bày nội dung (cỡ chữ, tương phản,...)",
+        "Có căn chỉnh",
+        "Màu sắc hài hoà",
+        "Note số trang sách cho HV mở nếu có",
+        "Không có bất kỳ lỗi nào về spelling, dấu câu, ngữ pháp,... (tương tự với DC và lesson plan)",
+        "Review: Đã có xen kẽ giữa các buổi; buổi nào có Speaking thì gồm cả các topics đã học trước đó",
+        "Grammar: Có áp dụng từ vựng buổi đang học + các chủ điểm ngữ pháp đã học trước, tính ứng dụng cao"
+      ]},
+      {name:"DC (Daily Challenge)", items:[
+        "Đặt tên đúng cú pháp [Mã lớp] - Lesson - Challenge. Viết hoa/thường y mẫu, để 'Không hiển thị', đúng loại bài.",
+        "Đưa hết văn bản về font Arial / đồng bộ",
+        "Bài nghe nếu có nhiều câu thì tách thành các file nghe nhỏ + có transcript trong phần giải thích đáp án",
+        "Nội dung câu hỏi mang tính ứng dụng, có thể dùng trong bài nói của HV",
+        "Bài tập không quá khó so với khả năng HV và kiến thức được cung cấp",
+        "Hướng dẫn đề bài đủ rõ ràng và dễ hiểu để HV làm không gặp khó khăn",
+        "Khối lượng DC phù hợp để HV làm trong vòng 2 tiếng mỗi ngày"
+      ]},
+      {name:"Lesson plan", items:[
+        "Có review lesson trước + review kiến thức mới (đã học ở nhà)",
+        "Có thời gian, hướng dẫn chi tiết cho từng hoạt động theo đúng flow trong slides",
+        "Thời gian giữa các hoạt động hợp lý, cân đối; GV mới đọc thấy đủ rõ ràng dễ follow; mọi hoạt động có mục đích cụ thể, các phần liên kết rõ ràng"
+      ]},
+      {name:"Tài liệu khác (Recap/Tổng kết khoá…)", items:[
+        "Đã điều chỉnh theo lộ trình mới"
+      ]}
+    ]
+  },
+  {
+    code:"IFB",
+    name:"IELTS Foundation B",
+    lessons:24,
+    changes:`1. Giai đoạn khởi đầu (Lesson 1–5): tái cấu trúc 5 buổi đầu, điều chỉnh trình tự kỹ năng. Lesson 5 tích hợp WHEE Brainstorming vào Writing Part 2.
+
+2. Writing Lesson 10: nâng cấp Line Graph trong 1 buổi:
+- Dưới 3 đường: so sánh chi tiết, mô tả thay đổi theo thời gian.
+- Trên 3 đường: nhóm số liệu (grouping), lọc thông tin theo xu hướng.
+
+3. Lesson 15: Mock Test 3 kỹ năng (Reading – Listening – Writing).
+
+4. Slide layout: đồng bộ hiện đại, tối giản. Speaking trên slide gồm Cấu trúc gợi ý (Structural Hints/Language Frames). Buổi Part 2 có handout Speaking để HV bám luyện trên lớp + làm DC ở nhà.`,
+    groups:[
+      {name:"Slides", items:[
+        "Đầy đủ nội dung và theo đúng lộ trình tổng quan mới",
+        "Có logo + QR code",
+        "Có chính phụ trong trình bày nội dung (cỡ chữ, tương phản,…)",
+        "Có căn chỉnh",
+        "Màu sắc hài hoà",
+        "Note số trang sách cho HV mở (nếu có)",
+        "Không có bất kỳ lỗi nào về spelling, dấu câu, ngữ pháp,... (tương tự với DC)"
+      ]},
+      {name:"DC (Daily Challenge)", items:[
+        "Đặt tên đúng cú pháp [Mã lớp] - Lesson - Challenge. Viết hoa/thường y mẫu, để 'Không hiển thị', đúng loại bài.",
+        "Đưa hết văn bản về font Arial / đồng bộ",
+        "Listening: Không cho sẵn transcript, chuyển thành dạng đục lỗ; điền từ xong là có full script để học từ mới",
+        "Speaking part 2: Có đầy đủ file handout gợi ý sườn và ideas trả lời, đồng bộ với file dùng trên lớp",
+        "Reading: Phần note từ vựng cuối ghi rõ 'khác các từ vựng trong bảng'",
+        "Khối lượng DC phù hợp để HV làm trong vòng 2 tiếng mỗi ngày"
+      ]},
+      {name:"Lesson plan", items:[
+        "Có review lesson trước + review kiến thức mới (đã học ở nhà)",
+        "Có thời gian, hướng dẫn chi tiết cho từng hoạt động theo đúng flow trong slides",
+        "Thời gian giữa các hoạt động hợp lý, cân đối; GV mới đọc thấy đủ rõ ràng dễ follow; mọi hoạt động có mục đích cụ thể, các phần liên kết rõ ràng"
+      ]},
+      {name:"Tài liệu khác (Recap/Tổng kết khoá…)", items:[
+        "Đã điều chỉnh theo lộ trình mới"
+      ]}
+    ]
+  }
+];
+
+/* ===================== State ===================== */
+const LS_KEY="cklist.local.v1";
+const LS_NAME="cklist.gvname";
+const LS_ROOM="cklist.roomid";
+
+const state = {
+  gvName: localStorage.getItem(LS_NAME) || "",
+  roomId: "",
+  provider: "jb",                    // backend provider tag (jb / jbp / np)
+  data: { v:1, cells:{} },           // cells["PRE/3/Slides/0"] = {status,note,by,at}
+  serverEtag: 0,
+  dirty: false,
+  saving: false,
+  pollTimer: null,
+  saveTimer: null,
+  currentCourse: "PRE",
+  currentLesson: 1
+};
+
+/* ===================== Backend (multi-provider with fallback) ===================== */
+/* Each provider has the same shape: create(initial) → id, read(id) → object, write(id, body) → ok.
+   Room id is stored in URL as `#room=PROVIDER:ID` so each visitor uses the right backend.
+   On create we try providers in order; the first that succeeds wins. */
+
+const PROVIDERS = {
+  // jsonblob.com direct
+  jb: {
+    label: "JSONBlob (direct)",
+    base: "https://jsonblob.com/api/jsonBlob",
+    async create(initial){
+      const r = await timedFetch(this.base,{method:"POST",
+        headers:{"Content-Type":"application/json","Accept":"application/json"},
+        body: JSON.stringify(initial)});
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      const loc = r.headers.get("Location") || r.headers.get("location") || "";
+      const id = loc.split("/").pop();
+      if(!id) throw new Error("Server did not return Location header");
+      return id;
+    },
+    async read(id){
+      const r = await timedFetch(`${this.base}/${id}`,{headers:{Accept:"application/json"}});
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      return r.json();
+    },
+    async write(id,body){
+      const r = await timedFetch(`${this.base}/${id}`,{method:"PUT",
+        headers:{"Content-Type":"application/json","Accept":"application/json"},
+        body: JSON.stringify(body)});
+      if(!r.ok) throw new Error("HTTP "+r.status);
+    }
+  },
+  // jsonblob.com via corsproxy.io (in case CORS preflight is blocked)
+  jbp: {
+    label: "JSONBlob via corsproxy.io",
+    base: "https://corsproxy.io/?url=" + encodeURIComponent("https://jsonblob.com/api/jsonBlob"),
+    async create(initial){
+      const r = await timedFetch(this.base,{method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(initial)});
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      const loc = r.headers.get("Location") || r.headers.get("location") || r.headers.get("x-location") || "";
+      const id = loc.split("/").pop();
+      if(!id) throw new Error("No Location through proxy");
+      return id;
+    },
+    async read(id){
+      const u = "https://corsproxy.io/?url=" + encodeURIComponent("https://jsonblob.com/api/jsonBlob/"+id);
+      const r = await timedFetch(u);
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      return r.json();
+    },
+    async write(id,body){
+      const u = "https://corsproxy.io/?url=" + encodeURIComponent("https://jsonblob.com/api/jsonBlob/"+id);
+      const r = await timedFetch(u,{method:"PUT",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(body)});
+      if(!r.ok) throw new Error("HTTP "+r.status);
+    }
+  },
+  // npoint.io – fully different service, returns id in JSON body
+  np: {
+    label: "npoint.io",
+    base: "https://api.npoint.io",
+    async create(initial){
+      const r = await timedFetch(this.base + "/", {method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(initial)});
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      const j = await r.json().catch(()=>null);
+      const id = j && (j.token || j.id || j._id);
+      if(!id) throw new Error("No id from npoint");
+      return id;
+    },
+    async read(id){
+      const r = await timedFetch(`${this.base}/${id}`);
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      return r.json();
+    },
+    async write(id,body){
+      const r = await timedFetch(`${this.base}/${id}`, {method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(body)});
+      if(!r.ok) throw new Error("HTTP "+r.status);
+    }
+  }
+};
+const PROVIDER_ORDER = ["jb","jbp","np"];
+
+function timedFetch(url, opts={}, ms=8000){
+  return new Promise((resolve, reject)=>{
+    const ctl = ("AbortController" in window) ? new AbortController() : null;
+    const t = setTimeout(()=>{ if(ctl) ctl.abort(); reject(new Error("Timeout sau "+(ms/1000)+"s")); }, ms);
+    fetch(url, {...opts, signal: ctl?ctl.signal:undefined})
+      .then(r=>{clearTimeout(t); resolve(r);})
+      .catch(e=>{clearTimeout(t); reject(e);});
+  });
+}
+
+function parseRoom(raw){
+  // Accept both "PROVIDER:ID" and bare "ID" (legacy → assume jb)
+  if(!raw) return null;
+  const ix = raw.indexOf(":");
+  if(ix<0) return {provider:"jb", id: raw};
+  return {provider: raw.slice(0,ix), id: raw.slice(ix+1)};
+}
+function joinRoomTag(provider,id){ return provider+":"+id; }
+
+async function createRoomAnyProvider(initial){
+  const errors = [];
+  for(const p of PROVIDER_ORDER){
+    try{
+      const id = await PROVIDERS[p].create(initial);
+      return {provider:p, id};
+    }catch(e){ errors.push(`${p}: ${e.message||e}`); }
+  }
+  throw new Error("Tất cả backend đều không phản hồi:\n• " + errors.join("\n• "));
+}
+async function readRoom(provider, id){
+  const prov = PROVIDERS[provider] || PROVIDERS.jb;
+  return prov.read(id);
+}
+async function writeRoom(provider, id, body){
+  const prov = PROVIDERS[provider] || PROVIDERS.jb;
+  return prov.write(id, body);
+}
+
+/* ===================== Helpers ===================== */
+function $(s,el=document){return el.querySelector(s)}
+function $$(s,el=document){return Array.from(el.querySelectorAll(s))}
+function esc(s){return String(s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}
+function cellKey(course,lesson,group,idx){return `${course}/${lesson}/${group}/${idx}`}
+function getCell(k){return state.data.cells[k] || {status:"",note:"",by:"",at:0}}
+function setCell(k,patch){
+  const cur = state.data.cells[k] || {status:"",note:"",by:"",at:0};
+  const next = {...cur, ...patch, by: state.gvName||"(ẩn danh)", at: Date.now()};
+  state.data.cells[k] = next;
+  saveLocal(); markDirty();
+}
+function saveLocal(){ try{localStorage.setItem(LS_KEY, JSON.stringify(state.data))}catch(e){} }
+function loadLocal(){ try{const raw=localStorage.getItem(LS_KEY); if(raw){const d=JSON.parse(raw); if(d&&d.cells) state.data=d;}}catch(e){} }
+function fmtTime(ts){ if(!ts) return ""; const d=new Date(ts);
+  return d.toLocaleString("vi-VN",{hour:"2-digit",minute:"2-digit",day:"2-digit",month:"2-digit"}) }
+function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");
+  clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),1600)}
+
+function setSync(state, label){
+  const p=$("#syncPill"); p.className="pill "+(state||"");
+  p.textContent=label;
+}
+
+/* ===================== Sync logic ===================== */
+function markDirty(){
+  state.dirty = true;
+  setSync("warn","Đang chờ lưu…");
+  clearTimeout(state.saveTimer);
+  state.saveTimer = setTimeout(pushNow, 700);
+}
+
+async function pushNow(){
+  if(!state.roomId || state.saving) return;
+  state.saving = true;
+  setSync("warn","Đang lưu…");
+  try{
+    // pull-then-merge to reduce conflicts
+    const remote = await readRoom(state.provider, state.roomId).catch(()=>null);
+    if(remote && remote.cells){
+      for(const [k,rv] of Object.entries(remote.cells)){
+        const lv = state.data.cells[k];
+        if(!lv || (rv.at||0) > (lv.at||0)) state.data.cells[k] = rv;
+      }
+    }
+    await writeRoom(state.provider, state.roomId, state.data);
+    state.dirty = false;
+    state.serverEtag = Date.now();
+    setSync("ok","Đã lưu • "+ new Date().toLocaleTimeString("vi-VN"));
+    saveLocal();
+    renderAll();
+  }catch(e){
+    setSync("bad","Lỗi lưu – sẽ thử lại");
+    setTimeout(pushNow, 4000);
+  }finally{
+    state.saving = false;
+  }
+}
+
+async function pullNow(){
+  if(!state.roomId || state.saving || state.dirty) return;
+  try{
+    const remote = await readRoom(state.provider, state.roomId);
+    if(remote && remote.cells){
+      let changed = false;
+      for(const [k,rv] of Object.entries(remote.cells)){
+        const lv = state.data.cells[k];
+        if(!lv || (rv.at||0) > (lv.at||0)) { state.data.cells[k] = rv; changed = true; }
+      }
+      if(changed){ saveLocal(); renderAll(); setSync("ok","Đã đồng bộ • "+ new Date().toLocaleTimeString("vi-VN")); }
+      else setSync("ok","Đồng bộ • "+ new Date().toLocaleTimeString("vi-VN"));
+    }
+  }catch(e){ setSync("bad","Mất kết nối"); }
+}
+
+function startPolling(){
+  clearInterval(state.pollTimer);
+  state.pollTimer = setInterval(pullNow, 6000);
+}
+
+/* ===================== Rendering ===================== */
+function renderTabs(){
+  const t = $("#tabs"); t.innerHTML = "";
+  COURSES.forEach(c=>{
+    const b = document.createElement("div");
+    b.className = "tab"+(c.code===state.currentCourse?" active":"");
+    b.textContent = `${c.code} – ${c.name}`;
+    b.onclick = ()=>{ state.currentCourse=c.code; state.currentLesson=1; renderAll(); };
+    t.appendChild(b);
+  });
+}
+
+function getCourse(){ return COURSES.find(c=>c.code===state.currentCourse) }
+
+function lessonStats(course, lesson){
+  let total=0, pass=0, fail=0, na=0, done=0;
+  course.groups.forEach(g=>{
+    g.items.forEach((_,i)=>{
+      total++;
+      const c = getCell(cellKey(course.code, lesson, g.name, i));
+      if(c.status==="pass"){pass++; done++;}
+      else if(c.status==="fail"){fail++; done++;}
+      else if(c.status==="na"){na++; done++;}
+    });
+  });
+  return {total,pass,fail,na,done};
+}
+
+function renderLessonList(){
+  const c = getCourse();
+  const list = $("#lessonList"); list.innerHTML = "";
+  for(let i=1;i<=c.lessons;i++){
+    const s = lessonStats(c,i);
+    const row = document.createElement("div");
+    row.className = "lesson-btn"+(i===state.currentLesson?" active":"");
+    let badgeCls = "badge"; let badgeText = `${s.done}/${s.total}`;
+    if(s.done===s.total && s.fail===0) badgeCls = "badge ok";
+    else if(s.done>0) badgeCls = "badge partial";
+    row.innerHTML = `<span>Lesson ${i}</span><span class="${badgeCls}">${badgeText}</span>`;
+    row.onclick = ()=>{ state.currentLesson = i; renderLessonList(); renderChecklist(); };
+    list.appendChild(row);
+  }
+}
+
+function renderIntro(){
+  const c = getCourse();
+  $("#introCourse").textContent = c.code+" – "+c.name;
+  $("#introChanges").textContent = c.changes;
+  // summary grid
+  const grid = $("#summaryGrid"); grid.innerHTML = "";
+  let g={total:0,pass:0,fail:0,done:0};
+  for(let i=1;i<=c.lessons;i++){
+    const s = lessonStats(c,i);
+    g.total += s.total; g.pass += s.pass; g.fail += s.fail; g.done += s.done;
+    const card = document.createElement("div");
+    card.className = "sum-card";
+    const pct = s.total ? Math.round(100*s.done/s.total) : 0;
+    card.innerHTML = `<b>Lesson ${i}</b>
+      <div class="hint">${s.done}/${s.total} mục · ${s.pass}✓ · ${s.fail}✗</div>
+      <div class="progress"><i style="width:${pct}%; background:${s.fail>0?'var(--warn)':'var(--pass)'}"></i></div>`;
+    grid.appendChild(card);
+  }
+}
+
+function renderChecklist(){
+  const c = getCourse();
+  const L = state.currentLesson;
+  $("#ctxCourse").textContent = c.code;
+  $("#ctxLesson").textContent = "Lesson "+L;
+  const area = $("#checklistArea"); area.innerHTML = "";
+  c.groups.forEach(group=>{
+    const h = document.createElement("div"); h.className="group-title"; h.textContent = group.name;
+    area.appendChild(h);
+    const tbl = document.createElement("table"); tbl.className="checklist";
+    tbl.innerHTML = `<thead><tr>
+      <th>Tiêu chí</th><th>Trạng thái</th><th>Ghi chú</th><th>GV / Cập nhật</th>
+    </tr></thead><tbody></tbody>`;
+    const tb = tbl.querySelector("tbody");
+    group.items.forEach((text,idx)=>{
+      const k = cellKey(c.code, L, group.name, idx);
+      const cell = getCell(k);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="crit">${esc(text)}</td>
+        <td class="status">
+          <div class="seg" data-key="${esc(k)}">
+            <button class="pass ${cell.status==='pass'?'on':''}" data-v="pass">✓ Đạt</button>
+            <button class="fail ${cell.status==='fail'?'on':''}" data-v="fail">✗ Lỗi</button>
+            <button class="na ${cell.status==='na'?'on':''}" data-v="na">N/A</button>
+          </div>
+        </td>
+        <td class="note"><textarea class="note" data-key="${esc(k)}" placeholder="Ghi chú (tuỳ chọn)…">${esc(cell.note)}</textarea></td>
+        <td class="audit">${cell.by?esc(cell.by):"<i style='color:#9ca3af'>chưa check</i>"}<br>${fmtTime(cell.at)}</td>
+      `;
+      tb.appendChild(tr);
+    });
+    area.appendChild(tbl);
+  });
+
+  // wire up status segments
+  area.querySelectorAll(".seg").forEach(seg=>{
+    const k = seg.getAttribute("data-key");
+    seg.querySelectorAll("button").forEach(btn=>{
+      btn.onclick = ()=>{
+        const v = btn.getAttribute("data-v");
+        const cur = getCell(k).status;
+        const next = (cur===v) ? "" : v; // toggle off if click same
+        setCell(k,{status:next});
+        renderLessonList(); renderIntro();
+        // light-touch local update for the segment
+        seg.querySelectorAll("button").forEach(b=>b.classList.remove("on"));
+        if(next) seg.querySelector(`button[data-v="${next}"]`).classList.add("on");
+        // re-render audit cell of this row
+        const tr = seg.closest("tr");
+        const c = getCell(k);
+        tr.querySelector(".audit").innerHTML = (c.by?esc(c.by):"<i style='color:#9ca3af'>chưa check</i>")+"<br>"+fmtTime(c.at);
+      };
+    });
+  });
+  // wire up notes
+  area.querySelectorAll("textarea.note").forEach(ta=>{
+    const k = ta.getAttribute("data-key");
+    let t=null;
+    ta.addEventListener("input", ()=>{
+      clearTimeout(t);
+      t = setTimeout(()=>{
+        setCell(k,{note: ta.value});
+        const tr = ta.closest("tr");
+        const c = getCell(k);
+        tr.querySelector(".audit").innerHTML = (c.by?esc(c.by):"<i style='color:#9ca3af'>chưa check</i>")+"<br>"+fmtTime(c.at);
+        renderLessonList(); renderIntro();
+      }, 350);
+    });
+  });
+}
+
+function renderAll(){ renderTabs(); renderIntro(); renderLessonList(); renderChecklist(); $("#gvLabel").textContent = state.gvName||"chưa đặt tên"; }
+
+/* ===================== Bootstrap ===================== */
+function getRoomFromUrl(){
+  const h = location.hash || "";
+  const m = h.match(/room=([A-Za-z0-9_-]+)/);
+  return m ? m[1] : (localStorage.getItem(LS_ROOM)||"");
+}
+function setRoomInUrl(id){
+  state.roomId = id;
+  localStorage.setItem(LS_ROOM, id);
+  const others = (location.hash||"").replace(/(^#|&)room=[^&]*/,"").replace(/^[#&]/,"");
+  location.hash = "room="+id + (others?"&"+others:"");
+  $("#roomPill").textContent = "Phòng: "+id.slice(-8);
+}
+
+async function bootstrap(){
+  // Ask name
+  if(!state.gvName){ openNameModal(); }
+  else $("#gvLabel").textContent = state.gvName;
+
+  const id = getRoomFromUrl();
+  const lastRoom = localStorage.getItem(LS_ROOM)||"";
+  if(id){
+    // If joining a *different* room than last time, drop local cache to avoid polluting the new room.
+    if(id === lastRoom){ loadLocal(); }
+    else { state.data = { v:1, cells:{} }; }
+    state.roomId = id;
+    $("#roomPill").textContent = "Phòng: "+id.slice(-8);
+    setSync("warn","Đang tải phòng…");
+    try{
+      const remote = await readBlob(id);
+      if(remote && remote.cells){
+        for(const [k,rv] of Object.entries(remote.cells)){
+          const lv = state.data.cells[k];
+          if(!lv || (rv.at||0) > (lv.at||0)) state.data.cells[k] = rv;
+        }
+      }
+      setSync("ok","Đã kết nối phòng");
+      localStorage.setItem(LS_ROOM, id);
+      saveLocal();
+    }catch(e){
+      setSync("bad","Không vào được phòng – kiểm tra mã");
+      openRoomModal("Không tải được phòng "+id+". Mã có thể sai hoặc đã bị xoá.");
+    }
+    startPolling();
+  } else {
+    // No room in URL: start with empty local; do NOT auto-load old localStorage to avoid stale data.
+    state.data = { v:1, cells:{} };
+    openRoomModal();
+  }
+  renderAll();
+}
+
+/* ===================== Modals ===================== */
+function openNameModal(){
+  $("#nameInput").value = state.gvName||"";
+  $("#nameModal").style.display="flex";
+  setTimeout(()=>$("#nameInput").focus(),50);
+}
+$("#btnChangeName").onclick = openNameModal;
+$("#nameSave").onclick = ()=>{
+  const v = $("#nameInput").value.trim();
+  if(!v){ $("#nameInput").focus(); return; }
+  state.gvName = v; localStorage.setItem(LS_NAME, v);
+  $("#gvLabel").textContent = v;
+  $("#nameModal").style.display="none";
+};
+
+function openRoomModal(err){
+  $("#roomError").textContent = err||"";
+  $("#roomModal").style.display="flex";
+}
+$("#btnCreateRoom").onclick = async ()=>{
+  $("#btnCreateRoom").disabled = true;
+  $("#roomError").textContent = "Đang tạo phòng…";
+  try{
+    // Always start a brand-new room empty so it isn't seeded with stale local data.
+    state.data = { v:1, cells:{} };
+    const id = await createBlob({v:1, createdAt: new Date().toISOString(), cells: {}});
+    setRoomInUrl(id);
+    $("#roomModal").style.display="none";
+    setSync("ok","Đã tạo phòng");
+    saveLocal();
+    startPolling();
+    renderAll();
+    toast("Đã tạo phòng. Sao chép link để chia sẻ cho GV.");
+  }catch(e){ $("#roomError").textContent = e.message || "Lỗi tạo phòng"; }
+  finally{ $("#btnCreateRoom").disabled = false; }
+};
+$("#btnJoinRoom").onclick = async ()=>{
+  const id = $("#roomInput").value.trim();
+  if(!id){ $("#roomInput").focus(); return; }
+  $("#roomError").textContent = "Đang vào phòng…";
+  try{
+    // Drop any stale local data from a previous room to avoid polluting this one.
+    state.data = { v:1, cells:{} };
+    const remote = await readBlob(id);
+    if(remote && remote.cells) state.data.cells = {...remote.cells};
+    setRoomInUrl(id);
+    $("#roomModal").style.display="none";
+    setSync("ok","Đã vào phòng");
+    startPolling(); renderAll(); saveLocal();
+  }catch(e){ $("#roomError").textContent = "Không vào được phòng. Kiểm tra mã."; }
+};
+
+$("#btnShare").onclick = async ()=>{
+  if(!state.roomId){ toast("Chưa có phòng"); return; }
+  const url = location.href;
+  try{
+    await navigator.clipboard.writeText(url);
+    toast("Đã sao chép link – gửi cho các GV để cùng check.");
+  }catch(e){ prompt("Sao chép link bên dưới:", url); }
+};
+$("#btnExport").onclick = ()=>{
+  const blob = new Blob([JSON.stringify(state.data,null,2)],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `checklist-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+};
+
+bootstrap();
+</script>
+</body>
+</html>
