@@ -665,33 +665,43 @@ function renderAll(){ renderTabs(); renderIntro(); renderLessonList(); renderChe
 /* ===================== Bootstrap ===================== */
 function getRoomFromUrl(){
   const h = location.hash || "";
-  const m = h.match(/room=([A-Za-z0-9_-]+)/);
+  const m = h.match(/room=([A-Za-z0-9_:.-]+)/);
   return m ? m[1] : (localStorage.getItem(LS_ROOM)||"");
 }
-function setRoomInUrl(id){
+function setRoomInUrl(provider, id){
+  state.provider = provider;
   state.roomId = id;
-  localStorage.setItem(LS_ROOM, id);
+  const tag = joinRoomTag(provider,id);
+  localStorage.setItem(LS_ROOM, tag);
   const others = (location.hash||"").replace(/(^#|&)room=[^&]*/,"").replace(/^[#&]/,"");
-  location.hash = "room="+id + (others?"&"+others:"");
-  $("#roomPill").textContent = "Phòng: "+id.slice(-8);
+  location.hash = "room="+tag + (others?"&"+others:"");
+  $("#roomPill").textContent = "Phòng: ["+provider+"] "+id.slice(-8);
 }
 
 async function bootstrap(){
-  // Ask name
+  // Detect file:// up-front (no fetch will work from there)
+  if(location.protocol === "file:"){
+    setSync("bad","Chạy từ file:// – cần host trước");
+    showFileWarning();
+    renderAll();
+    return;
+  }
+
   if(!state.gvName){ openNameModal(); }
   else $("#gvLabel").textContent = state.gvName;
 
-  const id = getRoomFromUrl();
-  const lastRoom = localStorage.getItem(LS_ROOM)||"";
-  if(id){
-    // If joining a *different* room than last time, drop local cache to avoid polluting the new room.
-    if(id === lastRoom){ loadLocal(); }
+  const tag = getRoomFromUrl();
+  const lastTag = localStorage.getItem(LS_ROOM)||"";
+  if(tag){
+    if(tag === lastTag){ loadLocal(); }
     else { state.data = { v:1, cells:{} }; }
-    state.roomId = id;
-    $("#roomPill").textContent = "Phòng: "+id.slice(-8);
+    const parsed = parseRoom(tag);
+    state.provider = parsed.provider;
+    state.roomId = parsed.id;
+    $("#roomPill").textContent = "Phòng: ["+parsed.provider+"] "+parsed.id.slice(-8);
     setSync("warn","Đang tải phòng…");
     try{
-      const remote = await readBlob(id);
+      const remote = await readRoom(parsed.provider, parsed.id);
       if(remote && remote.cells){
         for(const [k,rv] of Object.entries(remote.cells)){
           const lv = state.data.cells[k];
@@ -699,19 +709,34 @@ async function bootstrap(){
         }
       }
       setSync("ok","Đã kết nối phòng");
-      localStorage.setItem(LS_ROOM, id);
+      localStorage.setItem(LS_ROOM, tag);
       saveLocal();
     }catch(e){
-      setSync("bad","Không vào được phòng – kiểm tra mã");
-      openRoomModal("Không tải được phòng "+id+". Mã có thể sai hoặc đã bị xoá.");
+      setSync("bad","Không vào được phòng");
+      openRoomModal("Không tải được phòng. Lý do: "+(e.message||e)+
+        ". Có thể mã sai, phòng đã bị xoá, hoặc mạng đang chặn dịch vụ "+(PROVIDERS[parsed.provider]?.label||parsed.provider)+".");
     }
     startPolling();
   } else {
-    // No room in URL: start with empty local; do NOT auto-load old localStorage to avoid stale data.
     state.data = { v:1, cells:{} };
     openRoomModal();
   }
   renderAll();
+}
+
+function showFileWarning(){
+  $("#roomError").textContent = "";
+  $("#roomModal").style.display="flex";
+  $("#roomModal .modal").innerHTML = `
+    <h2>Không thể chạy từ file://</h2>
+    <p class="hint">Bạn đang mở file <code>checklist.html</code> trực tiếp từ máy. Trình duyệt sẽ chặn việc đồng bộ ra cloud (CORS).</p>
+    <p class="hint">Cách dùng đúng: upload file lên một dịch vụ host miễn phí rồi gửi link đó cho GV.</p>
+    <ol class="hint" style="padding-left:18px;line-height:1.7">
+      <li>Vào <a href="https://app.netlify.com/drop" target="_blank">app.netlify.com/drop</a></li>
+      <li>Kéo file <code>checklist.html</code> vào trang</li>
+      <li>Mở URL Netlify trả về (https://...netlify.app)</li>
+      <li>Bấm "Tạo phòng mới" và copy link có <code>#room=...</code> để gửi GV</li>
+    </ol>`;
 }
 
 /* ===================== Modals ===================== */
@@ -735,35 +760,37 @@ function openRoomModal(err){
 }
 $("#btnCreateRoom").onclick = async ()=>{
   $("#btnCreateRoom").disabled = true;
-  $("#roomError").textContent = "Đang tạo phòng…";
+  $("#roomError").textContent = "Đang thử các backend (jsonblob → corsproxy → npoint)…";
   try{
-    // Always start a brand-new room empty so it isn't seeded with stale local data.
     state.data = { v:1, cells:{} };
-    const id = await createBlob({v:1, createdAt: new Date().toISOString(), cells: {}});
-    setRoomInUrl(id);
+    const {provider, id} = await createRoomAnyProvider({v:1, createdAt: new Date().toISOString(), cells: {}});
+    setRoomInUrl(provider, id);
     $("#roomModal").style.display="none";
-    setSync("ok","Đã tạo phòng");
+    setSync("ok","Đã tạo phòng ["+provider+"]");
     saveLocal();
     startPolling();
     renderAll();
-    toast("Đã tạo phòng. Sao chép link để chia sẻ cho GV.");
-  }catch(e){ $("#roomError").textContent = e.message || "Lỗi tạo phòng"; }
+    toast("Đã tạo phòng qua "+(PROVIDERS[provider]?.label||provider)+". Bấm 'Sao chép link' để gửi GV.");
+  }catch(e){
+    $("#roomError").innerHTML = "Tạo phòng thất bại. <br><small>"+esc(e.message||String(e))+"</small><br>"+
+      "Có thể mạng đang chặn dịch vụ JSON. Hãy thử lại sau, hoặc thử trên mạng khác (4G/wifi nhà).";
+  }
   finally{ $("#btnCreateRoom").disabled = false; }
 };
 $("#btnJoinRoom").onclick = async ()=>{
-  const id = $("#roomInput").value.trim();
-  if(!id){ $("#roomInput").focus(); return; }
+  const raw = $("#roomInput").value.trim();
+  if(!raw){ $("#roomInput").focus(); return; }
   $("#roomError").textContent = "Đang vào phòng…";
   try{
-    // Drop any stale local data from a previous room to avoid polluting this one.
     state.data = { v:1, cells:{} };
-    const remote = await readBlob(id);
+    const parsed = parseRoom(raw);
+    const remote = await readRoom(parsed.provider, parsed.id);
     if(remote && remote.cells) state.data.cells = {...remote.cells};
-    setRoomInUrl(id);
+    setRoomInUrl(parsed.provider, parsed.id);
     $("#roomModal").style.display="none";
     setSync("ok","Đã vào phòng");
     startPolling(); renderAll(); saveLocal();
-  }catch(e){ $("#roomError").textContent = "Không vào được phòng. Kiểm tra mã."; }
+  }catch(e){ $("#roomError").textContent = "Không vào được phòng. ("+(e.message||e)+")"; }
 };
 
 $("#btnShare").onclick = async ()=>{
